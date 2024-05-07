@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Liked albums</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        box-sizing: border-box;
+        font-family: sans-serif;
+        font-size: 15px;
+        line-height: 1;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", "Droid Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+
+    #root {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2em;
+    }
+
+    .album {
+        max-width: 210px;
+    }
+
+    .album__cover {
+        margin-bottom: 0.5em;
+    }
+
+    .album__title {
+        line-height: 1.25;
+    }
+
+    .album__artist {
+        line-height: 1.25;
+    }
+
+    #howto {
+        padding: 1em;
+    }
+
+    #howto p {
+        margin: 1em 0;
+    }
+
+    #howto pre {
+        margin-bottom: 1.5em;
+    }
+
+    #howto code {
+        padding: 0.5em;
+        border-left: 6px solid;
+        background: #eee;
+        font-family: monospace;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+<body>
+
+<div id="root"></div>
+<div id="howto" class="hidden">
+    <p>Log in to your account at <a href="https://bandcamp.com" target="_blank">https://bandcamp.com</a>.</p>
+    <p>Open the browser console — press F12 if you use Firefox, Chrome or Safari.</p>
+    <p>Paste and run the following code:</p>
+    <pre><code>alert(`https://torunar.github.io/bandcamp-liked-albums-widget/?fan_id=${JSON.parse(pagedata.dataset.blob).identities.fan.id}`);</code></pre>
+    <p>Use URL from the pop-up message to embed your liked albums list anywhere:</p>
+    <pre><code>&lt;iframe src="{widget URL}" width="690" height="720" frameborder="0" /&gt;</code></pre>
+</div>
+
+<script>
+    async function loadLikedAlbums(fanId) {
+        const response = await fetch(
+            `https://corsproxy.io/?${encodeURIComponent('https://bandcamp.com/api/fancollection/1/search_items')}`,
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    fan_id: fanId,
+                    search_type: 'wishlist',
+                    search_key: ''
+                })
+            }
+        );
+
+
+        const { tralbums } = await response.json();
+        tralbums.sort((album1, album2) => new Date(album2.added).getTime() - new Date(album1.added).getTime());
+
+        document.getElementById('root').innerHTML = tralbums.reduce((html, album) =>
+            `${html}
+            <a href="${album.item_url}" class="album">
+                <img width="210"
+                     height="210"
+                     src="${album.item_art.url}"
+                     class="album__cover"
+                     alt="${album.album_title} by ${album.band_name}"
+                />
+                <h4 class="album__title">${album.album_title}</h4>
+                by <span class="album__artist">${album.band_name}</span>
+            </a>`,
+            ''
+        );
+    }
+
+    function showUsageInformation() {
+        document.getElementById('howto').className = '';
+    }
+
+    const fanId = (new URLSearchParams(location.search)).get('fan_id');
+    /^\d+$/.test(fanId)
+        ? loadLikedAlbums(parseInt(fanId))
+        : showUsageInformation();
+</script>
+</body>
+</html>
