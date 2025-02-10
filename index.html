@@ -75,7 +75,7 @@
 <script>
     async function loadLikedAlbums(fanId) {
         const response = await fetch(
-            `https://corsproxy.io/?${encodeURIComponent('https://bandcamp.com/api/fancollection/1/search_items')}`,
+            `https://corsproxy.io/?url=${encodeURIComponent('https://bandcamp.com/api/fancollection/1/search_items')}`,
             {
                 method: 'POST',
                 body: JSON.stringify({
